@@ -10,8 +10,9 @@ Yet Another GitHub v3 Python API
 ## Developer Editable Installation
 
 From `yagpy` root directory, execute:
-
-    `pip install -e .`
+```
+pip install -e .
+```
 
 NOTE: If not using virtualenv on OS X, you might need to use the `--user` option
 with `pip`.
@@ -26,60 +27,77 @@ Unauthenticated GitHub API requests are subjected to severe rate limits. Using
 organization will almost certainly trigger rate limit errors.
 
 This tool supports basic authentication via command-line optional arg
-`--basic-auth` as well as via configuration file. Run `ghtoporgrepos --help`
+--basic-auth as well as via configuration file. Run `ghtoporgrepos --help`
 for more details.
 
 
 ## Executing the command-line tool
 
-The project's `setup.py` (used by te `pip` command above) installs the console
+The project's `setup.py` (used by the `pip` command above) installs the console
 script `ghtoporgrepos`; assuming that `pip`'s `bin` installation directory is in
 your `PATH`, you may run the tool this way:
 
-    `ghtoporgrepos stars nodejs --max 10`
-    `ghtoporgrepos forks nodejs --max 10`
-    `ghtoporgrepos pulls nodejs --max 10 --basic-auth user:password`
-    `ghtoporgrepos contrib-percent nodejs --max 10 --basic-auth user:password`
+```
+ghtoporgrepos stars nodejs --max 10
+ghtoporgrepos forks nodejs --max 10
+ghtoporgrepos pulls nodejs --max 10 --basic-auth user:password
+ghtoporgrepos contrib-percent nodejs --max 10 --basic-auth user:password
+ghtoporgrepos --help
 
-    `ghtoporgrepos --help`
+usage: ghtoporgrepos ACTION ORGANIZATION \[-h] \[--max MAX] \[--basic-auth BASIC_AUTH]
+
+Get top-N GitHub organization repositories meeting the given criteria.
+Authentication credentials may provided either via the optional arg --basic-
+auth or via config file at location referenced by the environment variable
+YAGPY_CONFIG_PATH, defaulting to '~/.yagpy/config'. Unauthenticated access is
+subject to severely reduced GitHub request rate quota limits and increased
+command errors.
+
+positional arguments:
+  ACTION                contrib-ratio: Top-N repos by contribution ratio
+                        (PRs/forks); forks: Top-N repos by number of forks;
+                        pulls: Top-N repos by number of Pull Requests (PRs);
+                        stars: Top-N repos by number of stars;
+  ORGANIZATION          Name of GitHub organization.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --basic-auth BASIC\_AUTH
+                        Colon-separated GitHub basic authentication
+                        credentials (user:password). NOTE: user containing
+                        colon character(s) is not supported.
+  --max MAX             Maximum results to output [5].
 
 ```
-    usage: ghtoporgrepos ACTION ORGANIZATION [-h] [--max MAX] [--basic-auth BASIC_AUTH]
-
-    Get top-N GitHub organization repositories meeting the given criteria.
-    Authentication credentials may provided either via the optional arg --basic-
-    auth or via config file at location referenced by the environment variable
-    YAGPY_CONFIG_PATH, defaulting to '~/.yagpy/config'. Unauthenticated access is
-    subject to severely reduced GitHub request rate quota limits and increased
-    command errors.
-
-    positional arguments:
-      ACTION                contrib-ratio: Top-N repos by contribution ratio
-                            (PRs/forks); forks: Top-N repos by number of forks;
-                            pulls: Top-N repos by number of Pull Requests (PRs);
-                            stars: Top-N repos by number of stars;
-      ORGANIZATION          Name of GitHub organization.
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      --basic-auth BASIC_AUTH
-                            Colon-separated GitHub basic authentication
-                            credentials (user:password). NOTE: user containing
-                            colon character(s) is not supported.
-      --max MAX             Maximum results to output [5].
-```
-
-
-## Testing
+## Running Tests
 
 1. Install yagpy - see "Developer Editable Installation" above
 2. Install nosetests:
-
-    `pip install nose`
+```
+pip install nose
+```
 
 NOTE: If not using virtualenv on OS X, you might need to use the `--user` option
 with `pip`.
 
 From `yagpy` root directory, run the tests by executing:
 
-    `nosetests`
+```
+nosetests
+```
+
+The test output should look something like this:
+```
+test_top_repos_bad_arg (ghtoporgrepos_test.GitHubTopOrgReposTest) ... ok
+test_top_repos_by_contrib_ratio (ghtoporgrepos_test.GitHubTopOrgReposTest) ... ok
+test_top_repos_by_number_of_forks (ghtoporgrepos_test.GitHubTopOrgReposTest) ... ok
+test_top_repos_by_number_of_pulls (ghtoporgrepos_test.GitHubTopOrgReposTest) ... ok
+test_top_repos_by_number_of_stars (ghtoporgrepos_test.GitHubTopOrgReposTest) ... ok
+test_top_repos_help (ghtoporgrepos_test.GitHubTopOrgReposTest) ... ok
+```
+
+----------------------------------------------------------------------
+Ran 6 tests in 9.510s
+
+OK
+```
