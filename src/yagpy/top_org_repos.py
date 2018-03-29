@@ -42,7 +42,7 @@ import logging
 import numbers
 import sys
 
-from . import yagpy
+from yagpy import yagpy
 
 
 _LOG = logging.getLogger('__name__')
@@ -52,6 +52,8 @@ def top_org_repos(args=None, file=sys.stdout):
     """Console script entry point for the `ghtoporgrepos` command-line tool.
     Perform the requested query against GitHub and output results to the given
     text file object.
+
+    See this package's `setup.py` for console script integration info.
 
     :param sequence args: command-line args; defaults to `sys.argv`.
     :param file: output text file object exposing a file-oriented API;
@@ -335,7 +337,3 @@ class GitHubTopOrgReposCommand(object):
         except Exception as error:  # pylint: disable=W0703
             _LOG.debug('Request failed.', exc_info=True)
             sys.exit(error)
-
-
-if __name__ == '__main__':
-    top_org_repos()
