@@ -41,7 +41,7 @@ your `PATH`, you may run the tool this way:
 ghtoporgrepos stars nodejs --max 10
 ghtoporgrepos forks nodejs --max 10
 ghtoporgrepos pulls nodejs --max 10 --basic-auth user:password
-ghtoporgrepos contrib-percent nodejs --max 10 --basic-auth user:password
+ghtoporgrepos contrib-ratio nodejs --max 10 --basic-auth user:password
 ghtoporgrepos --help
 
 usage: ghtoporgrepos ACTION ORGANIZATION \[-h] \[--max MAX] \[--basic-auth BASIC_AUTH]
