@@ -1,15 +1,41 @@
 # yagpy
 Yet Another GitHub v3 Python API
 
+See https://developer.github.com/v3/
+
+**Table of Contents**
+* [Portability](#portability)
+* [Modules of Interest](#modules-of-interest)
+* [Developer Editable Installation](#developer-editable-installation)
+* [GitHub Request Rate Limits](#github-request-rate-limits)
+* [Configuring GitHub Basic Authentication](#configuring-github-basic-authentication)
+* [Executing the command-line tool](#executing-the-command-line-tool)
+* [Running Tests](#running-tests)
+
+
 ## Portability
 
-* Python 2.7.x and 3.4+ (tested on 2.7.10 and 3.6.4 on OS X)
+* Python 2.7.x and 3.4+ (tested with 2.7.10 and 3.6.4 on OS X)
 * Linux, OS X (and probably Windows)
+
+
+## Modules of Interest
+
+`src/yagpy/`
+* `top_org_repos.py`: implementation of the command-line tool with
+`top_org_repos()` as console script entry point.
+* `yagpy.py`: wrapper around GitHub v3 REST API for commmands needed by
+`top_org_repos.py`.
+
+`tests/acceptance/`
+* `ghtoporgrepos_test.py`: Prototypical acceptance/integration tests for
+commands supported by the command-line tool.
 
 
 ## Developer Editable Installation
 
-From `yagpy` root directory, execute:
+To install `yagpy` in editable mode, execute this `pip` command from `yagpy`
+root directory:
 ```
 pip install -e .
 ```
@@ -18,7 +44,7 @@ NOTE: If not using virtualenv on OS X, you might need to use the `--user` option
 with `pip`.
 
 
-## GitHub Request Rate Limits and Basic Authentication
+## GitHub Request Rate Limits
 
 See https://developer.github.com/v3/#rate-limiting
 
@@ -31,20 +57,44 @@ This tool supports basic authentication via command-line optional arg
 for more details.
 
 
+## Configuring GitHub Basic Authentication
+
+The command-line tool supports Basic Authentication using your GitHub username
+and password. There are two ways to supply the authentication credentails:
+1. Via command-line optional arg `--basic-auth=username:passwrod`
+2. Via configuration file
+
+If authentication credentials are not provided via `--basic-auth` command-line
+arg, the tool looks for the configration file: first, it checks the environment
+variable `YAGPY_CONFIG_PATH` - if it's defined, it's assumed to contain the
+location of the config file on the filesystem. If `YAGPY_CONFIG_PATH` is not
+set, the location defaults to `~/.yagpy/config`.
+
+The yagpy configuration file has the following format:
+```
+# yagpy (yet another github API python wrapper) cofiguration
+[default]
+github_user=username
+github_password="password"
+```
+
+
 ## Executing the command-line tool
 
-The project's `setup.py` (used by the `pip` command above) installs the console
-script `ghtoporgrepos`; assuming that `pip`'s `bin` installation directory is in
-your `PATH`, you may run the tool this way:
+The project's `setup.py` (used by the [yagpy installation command](#developer-editable-installation))
+installs the console script `ghtoporgrepos`; assuming that `pip`'s `bin`
+installation directory containing `ghtoporgrepos` is in your `PATH`, you may run
+the tool this way:
 
 ```
 ghtoporgrepos stars nodejs --max 10
 ghtoporgrepos forks nodejs --max 10
 ghtoporgrepos pulls nodejs --max 10 --basic-auth user:password
 ghtoporgrepos contrib-ratio nodejs --max 10 --basic-auth user:password
+
 ghtoporgrepos --help
 
-usage: ghtoporgrepos ACTION ORGANIZATION \[-h] \[--max MAX] \[--basic-auth BASIC_AUTH]
+usage: ghtoporgrepos ACTION ORGANIZATION [-h] [--max MAX] [--basic-auth BASIC_AUTH]
 
 Get top-N GitHub organization repositories meeting the given criteria.
 Authentication credentials may provided either via the optional arg --basic-
@@ -62,17 +112,18 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --basic-auth BASIC\_AUTH
+  --basic-auth BASIC_AUTH
                         Colon-separated GitHub basic authentication
                         credentials (user:password). NOTE: user containing
                         colon character(s) is not supported.
   --max MAX             Maximum results to output [5].
 
 ```
+
 ## Running Tests
 
-1. Install yagpy - see "Developer Editable Installation" above
-2. Install nosetests:
+1. Install `yagpy` - see [Developer Editable Installation](#developer-editable-installation) above.
+2. Install `nosetests`:
 ```
 pip install nose
 ```
@@ -80,7 +131,8 @@ pip install nose
 NOTE: If not using virtualenv on OS X, you might need to use the `--user` option
 with `pip`.
 
-From `yagpy` root directory, run the tests by executing:
+From `yagpy` root directory, run the tests by executing (assuming `nosetsts`'
+installation directory is in your `PATH`:
 
 ```
 nosetests
