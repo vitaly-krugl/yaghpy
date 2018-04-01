@@ -222,11 +222,11 @@ class GitHubTopOrgReposCommand(object):
                     num_pulls = sum(
                         1 for _ in
                         hub.repo(*repo['full_name'].split('/')).pulls().list_all())
-                    heap.push((num_pulls / repo['forks_count'], repo['name']))
+                    heap.push((float(num_pulls) / repo['forks_count'], repo['name']))
 
         while heap:
             ratio, name = heap.pop()
-            yield '{}:{}'.format(name, ratio)
+            yield '{}:{}'.format(name, round(ratio, 2))
 
     # Supported actions for get_top_repos()
     _TOP_REPOS_ACTIONS = {
