@@ -14,7 +14,6 @@ Assumptions:
 
 from __future__ import print_function
 
-import json
 import logging
 import numbers
 import os
@@ -27,15 +26,12 @@ PY3 = not PY2
 if PY3:
     from base64 import encodebytes as base64_encodebytes
     import configparser
-    from urllib.error import HTTPError
-    from urllib.parse import urlencode
-    from urllib.request import Request as HttpRequest, urlopen
 else:
     from base64 import encodestring as base64_encodebytes  # pylint: disable=C0412
     import ConfigParser as configparser
-    from urllib import urlencode  # pylint: disable=E0611,C0412
-    from urllib2 import HTTPError, Request as HttpRequest, urlopen  # pylint: disable=E0401
 
+import requests
+import requests.adapters
 
 _LOG = logging.getLogger('__name__')
 
@@ -82,7 +78,7 @@ class GitHubBasicAuthCredentials(object):
             unauthenticated access.
 
         TODO: support forced loading of credentials mode, e.g., with both set to
-              True.
+              True, that would raise if credentials aren't found.
 
         :param str user:
         :param str password:
@@ -101,15 +97,13 @@ class GitHubBasicAuthCredentials(object):
             # (None, None) if authentication is bypassed
             self.user, self.password = self._load_from_config_file()
 
-    def add_authentication_info(self, request):
-        """Add authentication header to the given HTTPRequest object.
+    def add_authentication_info(self, session):
+        """Add authentication header to the given session object.
 
-        :param HTTPRequest request:
+        :param requests.Session session:
         """
         if self.user is not None:
-            request.add_header(
-                'Authorization',
-                self._encode_basic_auth(self.user, self.password))
+            session.auth = (self.user, self.password)
 
     @staticmethod
     def _encode_basic_auth(user, password):
@@ -202,6 +196,25 @@ class GitHub(object):
         if self.cred is not None and self.cred.user is None:
             self.cred = None
 
+        # Use connection pooling and HTTP1.1 persistent connections
+        self._http_session = requests.Session()
+
+        # Override the default 0-retry limit
+        self._http_session.mount(
+            self.BASE_API_URL[:self.BASE_API_URL.index('//') + 2],
+            requests.adapters.HTTPAdapter(max_retries=10))
+
+        self._http_session.headers.update(self.V3_JSON_HEADER)
+
+        if self.cred:
+            self.cred.add_authentication_info(self._http_session)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self._http_session.close()
+
     def org(self, name):
         """Provide access to the GitHub /orgs v3 API
 
@@ -273,33 +286,35 @@ class GitHub(object):
             query = {'page': next_page}
             query.update(base_query_args)
             next_page += 1
-            url = (base_url + '?' + urlencode(query))
-
-            request = HttpRequest(url, headers=self.V3_JSON_HEADER)
-            if self.cred is not None:
-                self.cred.add_authentication_info(request)
 
             _LOG.debug(
-                'Initiating HTTP request for page %s; URL: %r and Headers: %r',
+                'Initiating HTTP request for page %s; URL: %r; query=%s and '
+                'Headers: %r',
                 next_page - 1,
-                request.get_full_url(),
-                request.header_items())
+                base_url,
+                query,
+                self._http_session.headers)
 
             try:
-                response = urlopen(request, timeout=self.HTTP_TIMEOUT)
-            except HTTPError as error:
-                _LOG.debug('Error url=%r; headers=%s', error.url, error.info(),
+                response = self._http_session.get(base_url,
+                                                  params=query,
+                                                  timeout=self.HTTP_TIMEOUT)
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as error:
+                _LOG.debug('Error url=%r; headers=%s',
+                           error.response.url,
+                           error.response.headers,
                            exc_info=True)
 
                 # 403 Forbidden; GitHub overloads it to signal rate limits too
-                if error.code == 403:
-                    info = error.info()
+                if error.response.status_code == 403:
+                    info = error.response.headers
 
                     if ('X-RateLimit-Remaining' in info and
                             info['X-RateLimit-Remaining'] == '0'):
                         msg_parts = [
                             'TRANSIENT ERROR! GitHub API rate limit exhausted '
-                            'while getting {!r}.'.format(error.url)]
+                            'while getting {!r}.'.format(error.response.url)]
 
                         if 'X-RateLimit-Limit' in info:
                             msg_parts.append(
@@ -318,7 +333,7 @@ class GitHub(object):
 
                 raise
 
-            yield json.load(response)
+            yield response.json()
 
 
 class GitHubRepo(object):

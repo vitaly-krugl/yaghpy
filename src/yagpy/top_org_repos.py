@@ -150,9 +150,9 @@ class GitHubTopOrgReposCommand(object):
         """
         heap = _SizeConstrainedMaxHeap(max_items)
 
-        hub = yagpy.GitHub(credentials)
-        for repo in hub.org(org).repos().list_all_sources():
-            heap.push((repo['stargazers_count'], repo['name']))
+        with yagpy.GitHub(credentials) as hub:
+            for repo in hub.org(org).repos().list_all_sources():
+                heap.push((repo['stargazers_count'], repo['name']))
 
         while heap:
             stars, name = heap.pop()
@@ -171,9 +171,9 @@ class GitHubTopOrgReposCommand(object):
         """
         heap = _SizeConstrainedMaxHeap(max_items)
 
-        hub = yagpy.GitHub(credentials)
-        for repo in hub.org(org).repos().list_all_sources():
-            heap.push((repo['forks_count'], repo['name']))
+        with yagpy.GitHub(credentials) as hub:
+            for repo in hub.org(org).repos().list_all_sources():
+                heap.push((repo['forks_count'], repo['name']))
 
         while heap:
             forks, name = heap.pop()
@@ -192,12 +192,12 @@ class GitHubTopOrgReposCommand(object):
         """
         heap = _SizeConstrainedMaxHeap(max_items)
 
-        hub = yagpy.GitHub(credentials)
-        for repo in hub.org(org).repos().list_all_sources():
-            num_pulls = sum(
-                1 for _ in
-                hub.repo(*repo['full_name'].split('/')).pulls().list_all())
-            heap.push((num_pulls, repo['name']))
+        with yagpy.GitHub(credentials) as hub:
+            for repo in hub.org(org).repos().list_all_sources():
+                num_pulls = sum(
+                    1 for _ in
+                    hub.repo(*repo['full_name'].split('/')).pulls().list_all())
+                heap.push((num_pulls, repo['name']))
 
         while heap:
             num_pulls, name = heap.pop()
@@ -216,17 +216,17 @@ class GitHubTopOrgReposCommand(object):
         """
         heap = _SizeConstrainedMaxHeap(max_items)
 
-        hub = yagpy.GitHub(credentials)
-        for repo in hub.org(org).repos().list_all_sources():
-            if repo['forks_count']:
-                num_pulls = sum(
-                    1 for _ in
-                    hub.repo(*repo['full_name'].split('/')).pulls().list_all())
-                heap.push((num_pulls / repo['forks_count'], repo['name']))
+        with yagpy.GitHub(credentials) as hub:
+            for repo in hub.org(org).repos().list_all_sources():
+                if repo['forks_count']:
+                    num_pulls = sum(
+                        1 for _ in
+                        hub.repo(*repo['full_name'].split('/')).pulls().list_all())
+                    heap.push((float(num_pulls) / repo['forks_count'], repo['name']))
 
         while heap:
             ratio, name = heap.pop()
-            yield '{}:{}'.format(name, ratio)
+            yield '{}:{}'.format(name, round(ratio, 2))
 
     # Supported actions for get_top_repos()
     _TOP_REPOS_ACTIONS = {
@@ -335,5 +335,5 @@ class GitHubTopOrgReposCommand(object):
             for item in process(parsed_args.org, parsed_args.max, credentials):
                 print(item, file=file)
         except Exception as error:  # pylint: disable=W0703
-            _LOG.debug('Request failed.', exc_info=True)
+            _LOG.debug('Request failed.', exc_info=True)  # for test framework
             sys.exit(error)

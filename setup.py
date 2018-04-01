@@ -22,6 +22,7 @@ setuptools.setup(
             ('ghtoporgrepos = {}.top_org_repos:top_org_repos'.format(name))
         ]
     },
+    install_requires=['requests'],
     classifiers=[
         'Development Status :: 1 - Planning',
         'Intended Audience :: Developers',
